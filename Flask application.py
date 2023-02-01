@@ -1,54 +1,66 @@
 import sqlite3
 import pandas as pd
 import sqlalchemy
-from flask import Flask
 from IPython.display import display
 import re
+from pymongo import MongoClient
 from flask import Flask
 app = Flask(__name__)
 # from tabulate install Tabulate
 
 
 
-def connectToSql():
+def konektiranjesosqlite(): #funkcija za konektianje na db so sqlite (imame konektiranje i cursor)
     try:
-        sqliteConnection = sqlite3.connect('test.db')
-        cursor = sqliteConnection.cursor()
-        print("Database created and Successfully Connected to SQLite")
-        return sqliteConnection,cursor
+        konekcija = sqlite3.connect('test.db')
+        cursor = konekcija.cursor()
+        print("Database Successfully Connected to SQLite")
+        return konekcija,cursor
 
     except Exception as error:
         print("Error while connecting to sqlite", error)
         return None, None
 
-
-@app.route("/")
-def home():
-    sqliteConnection,cursor = connectToSql()
-    if sqliteConnection is None or cursor is None:
-        return 'Error'
-    df = pd.read_sql("select name from companies", con=sqliteConnection)
-    df['name'].apply()
-    display(df)
-    return "Connected to SQLite DB"
-
-
-def transformString(st):
-    transformacija1=re.sub(r'\(.*\)', "", st)
-    transformacija2=re.sub(r',.*', "", transformacija1)
-    transformacija2.replace(' - ',"")
-    transformacija3=transformacija2\
+def procistuvanje(st):
+    procistuvanje1 = re.sub(r'\(.*\)', "", st)
+    procistuvanje2 = re.sub(r',.*', "", procistuvanje1)
+    procistuvanje2.replace(' - ',"")
+    procistuvanje3 = procistuvanje2\
         .replace("LIMITED", "")\
         .replace("Limited", "")\
         .replace("LTD.", "")\
         .replace('ltd.','')\
+        .replace('Ltd', "") \
+        .replace('ltd', "") \
+        .replace('.ltd', "") \
+        .replace("LTD", "")\
         .replace("limited", "")\
         .lower()\
         .title()
-    transformacija4=re.sub(r' - ', "", transformacija3)
-    return transformacija4
+    procistuvanje4 = re.sub(r' - ', "", procistuvanje3)
+    return procistuvanje4
 
-print (transformString('AAAAA-kjhk (asdasdas) - SJKFFJF -LIMITED LIMITED LTD. ltd. Limited limited'))
+
+@app.route("/", methods=["GET" , "POST"])
+def home():
+    konekcija, cursor = konektiranjesosqlite()
+    if konekcija is None or cursor is None:
+        return 'Error'
+    df = pd.read_sql("select * from companies", con=konekcija)
+    df['company_came_cleaned'] = df['name'].apply(procistuvanje)   # tuka se povikuva funkcijata procistuvanje i se
+    # izvrsuva i od name se prefluva vo cleaned
+    # df.to_sql(name='companies', if_exists='replace', con = konekcija)
+    # display(df)
+    client = MongoClient('localhost', 27017)
+    db = client.semos_database
+    collection = db.companies
+    collection.insert_many(df.to_dict('records'))
+    return "Connected to SQLite DB"
+
+
+
+
+print(procistuvanje('AAAAA-kjhk (asdasdas) - SJKFFJF -LIMITED LIMITED LTD. ltd. Limited limited LTD ltd' ))
 
 # df['name'].apply(funkicja(lambda a : a.replace('Limited', '')))
 app.run(debug=True)
@@ -60,4 +72,8 @@ app.run(debug=True)
 # print(df)
 # conn.close()
 
-
+# "Ahl":{
+#     name: ah
+#     city:...
+#
+# }
