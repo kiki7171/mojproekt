@@ -24,8 +24,8 @@ def konektiranjesosqlite(): #funkcija za konektianje na db so sqlite (imame kone
 def procistuvanje(st):
     procistuvanje1 = re.sub(r'\(.*\)', "", st)
     procistuvanje2 = re.sub(r',.*', "", procistuvanje1)
-    procistuvanje2.replace(' - ',"")
-    procistuvanje3 = procistuvanje2\
+    procistuvanje3 = procistuvanje2.replace(' - ',"")
+    procistuvanje4 = procistuvanje3\
         .replace("LIMITED", "")\
         .replace("Limited", "")\
         .replace("LTD.", "")\
@@ -37,20 +37,20 @@ def procistuvanje(st):
         .replace("limited", "")\
         .lower()\
         .title()
-    procistuvanje4 = re.sub(r' - ', "", procistuvanje3)
-    return procistuvanje4
+    procistuvanje5 = re.sub(r' - ', "", procistuvanje4)
+    return procistuvanje5
 
 
-@app.route("/", methods=["GET" , "POST"])
+@app.route("/", methods=["GET", "POST"])
 def home():
     konekcija, cursor = konektiranjesosqlite()
     if konekcija is None or cursor is None:
         return 'Error'
     df = pd.read_sql("select * from companies", con=konekcija)
-    df['company_came_cleaned'] = df['name'].apply(procistuvanje)   # tuka se povikuva funkcijata procistuvanje i se
+    df['company_came_cleaned'] = df['name'].apply(procistuvanje)  # tuka se povikuva funkcijata procistuvanje i se
     # izvrsuva i od name se prefluva vo cleaned
     # df.to_sql(name='companies', if_exists='replace', con = konekcija)
-    # display(df)
+    display(df)
     client = MongoClient('localhost', 27017)
     db = client.semos_database
     collection = db.companies
@@ -58,18 +58,16 @@ def home():
     return "Connected to SQLite DB"
 
 
-
-
 print(procistuvanje('AAAAA-kjhk (asdasdas) - SJKFFJF -LIMITED LIMITED LTD. ltd. Limited limited LTD ltd' ))
 
-# df['name'].apply(funkicja(lambda a : a.replace('Limited', '')))
+# mojadataframe['name'].apply(funkicja(lambda a : a.replace('Limited', '')))
 app.run(debug=True)
 # SELECT * FROM ime na kolonata e se sto teba da znaeme od SQL za da ja seletiame datata od
 
 # conn = sqlite3.connect(database)
 #
-# df = pd.read_sql("select * from name", con=conn)
-# print(df)
+# mojadataframe = pd.read_sql("select * from name", con=conn)
+# print(mojadataframe)
 # conn.close()
 
 # "Ahl":{
